@@ -35,7 +35,7 @@ class main():
         print(Fore.LIGHTRED_EX + "/    |    \    |   \|    |" + Fore.LIGHTBLACK_EX + "    / _ \| '_ \ / _` |/ _ \ '__|"+ Fore.RESET)
         print(Fore.LIGHTRED_EX + "\\____|__  /____|_  /|____|" + Fore.LIGHTBLACK_EX + "   | (_) | | | | (_| |  __/ |   "+ Fore.RESET)
         print(Fore.LIGHTRED_EX + "        \\/       \\/" + Fore.LIGHTBLACK_EX + "           \___/|_| |_|\__,_|\___|_|    "+ Fore.RESET)
-        print(Fore.LIGHTBLACK_EX + "___________________________________________________________")
+        print(Fore.LIGHTWHITE_EX + "___________________________________________________________")
         return
 
     def getArgs(self):
