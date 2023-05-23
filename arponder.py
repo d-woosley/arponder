@@ -107,14 +107,14 @@ class main():
         sleep(2) # Sleep to allow listner to start
         
         # Send the packet and wait for the response
-        print(Fore.LIGHTBLACK_EX + "\n  [-] Sending bogus ARP response" + Fore.RESET)
+        print(Fore.LIGHTBLACK_EX + "\n  [-] Sending bogus ARP announcement" + Fore.RESET)
         srp(bogusARPRequest, timeout=1, verbose=False)
 
         # Create an ARP response packet w/ correct MAC
         realARPRequest = Ether(dst=netMAC)/ARP(pdst=netIP)
             
         # Reset ARP to correct MAC
-        print(Fore.LIGHTBLACK_EX + "\n  [-] Resetting by sending correct ARP response" + Fore.RESET)
+        print(Fore.LIGHTBLACK_EX + "\n  [-] Resetting by sending correct ARP announcement" + Fore.RESET)
         srp(realARPRequest, timeout=1, verbose=False)
 
         # Wait for the thread to finish
