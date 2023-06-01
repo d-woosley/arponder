@@ -16,7 +16,7 @@ class main():
         # Call for ASCII Logo (To be added...)
         main().ascii()
 
-        print(Fore.LIGHTBLACK_EX + "\n[-] Strating..." + Fore.RESET)
+        print(Fore.LIGHTBLACK_EX + "\n[-] Starting..." + Fore.RESET)
 
         # Call for passed flags
         args = main().getArgs()
