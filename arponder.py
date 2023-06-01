@@ -153,7 +153,10 @@ def sniffStop(pkt,netIP, bogusMAC):
     return pkt.haslayer('ARP') and ARPParser(pkt, netIP, bogusMAC)
 
 def sniffStart(netIP,bogusMAC,netTimeout,netInterface):
-    sniff(lfilter=lambda pkt: pkt.haslayer('ARP') and ARPParser(pkt, netIP, bogusMAC),timeout=netTimeout, iface=netInterface,stop_filter=lambda pkt: sniffStop(pkt, netIP, bogusMAC))
+    try:
+        sniff(lfilter=lambda pkt: pkt.haslayer('ARP') and ARPParser(pkt, netIP, bogusMAC),timeout=netTimeout, iface=netInterface,stop_filter=lambda pkt: sniffStop(pkt, netIP, bogusMAC))
+    except PermissionError:
+        main().printError("  [!] Permission Error! Rerun with sudo")
 
 if __name__ == "__main__":
     try:
