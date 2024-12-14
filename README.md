@@ -7,19 +7,17 @@
 \____|__  /____|_  /|____|   | (_) | | | | (_| |  __/ |   
         \/       \/           \___/|_| |_|\__,_|\___|_|    
 ```
-A Modern Layer-2 Attack Toolkit... one day. Right now it just checks for ARP spoofing protections.
+Automatic stale ARP poisoning for penetration testing and red teaming.
 
-## Use
+# Installation
 ```bash
-sudo ./arponder.py check -I <Network Interface> [-t <Timeout>]
+pipx install git+https://github.com/d-woosley/arponder
 ```
 
-### Example
+# Run
 ```bash
-sudo ./arponder.py -I eht0 -t 10
+sudo arponder -I <Network Interface>
 ```
-
 
 ## To-do
- - Add in auto ARP poisoning agaist stale ARP
- - Do the rest of the whole "Modern Layer-2 Attack Toolkit" thing.
+ - Everything

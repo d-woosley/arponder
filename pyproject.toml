@@ -1,0 +1,23 @@
+[project]
+name = "arponder"
+version = "1.0.1"
+description = "arponder: Automatic stale ARP poisoning for penetration testing and red teaming."
+authors = [
+    { name = "Duncan Woosley"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "scapy",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["arponder*"]
+
+[project.scripts]
+aivish = "arponder.run:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
