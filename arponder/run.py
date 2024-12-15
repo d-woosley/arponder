@@ -7,9 +7,13 @@ from arponder.logo import ascii_logo
 def main():
     ascii_logo()
     args = load_args()
-    run_instance = Arponder(args.net_interface)
+    run_instance = Arponder(
+        net_interface=args.net_interface,
+        analyze_only=args.analyze,
+        debug=args.debug
+    )
 
-    run_instance.start_listener
+    run_instance.start_listener()
     exit()
 
 if __name__ == "__main__":
