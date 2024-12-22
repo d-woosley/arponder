@@ -11,6 +11,7 @@ dependencies = [
     "scapy",
     "colorama",
     "netifaces",
+    "pyroute2"
 ]
 
 [tool.setuptools.packages.find]

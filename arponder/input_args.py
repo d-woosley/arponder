@@ -23,7 +23,16 @@ def load_args():
         dest="analyze",
         help="Analyze ARP traffic without sending poisoned responses",
         action="store_true",
-        default=False,
+        default=False
+        )
+
+    parser.add_argument(
+        '--dummy-name',
+        dest="dummy_iface_name",
+        metavar="<NAME>",
+        help="Name of the interface to create (default=arp0)",
+        default="arp0",
+        type=str
         )
 
     parser.add_argument(
@@ -32,7 +41,7 @@ def load_args():
         dest="debug",
         help="Set output to debug",
         action="store_true",
-        default=False,
+        default=False
         )
 
     # Get arg results
