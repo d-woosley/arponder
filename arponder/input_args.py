@@ -27,11 +27,10 @@ def load_args():
         )
 
     parser.add_argument(
-        '--dummy-name',
-        dest="dummy_iface_name",
+        '--dummy-iface',
+        dest="dummy_iface",
         metavar="<NAME>",
-        help="Name of the interface to create (default=arp0)",
-        default="arp0",
+        help="Create a virtual interface with the given name to handle ARP spoofing (SEE GITHUB NOTES)",
         type=str
         )
 
