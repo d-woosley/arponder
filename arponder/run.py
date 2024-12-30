@@ -18,6 +18,8 @@ def main():
         if iface:
             iface.flush_ips()
             iface.remove_iface()
+        if arponder:
+            arponder.stop_queue()
 
 if __name__ == "__main__":
     main()
