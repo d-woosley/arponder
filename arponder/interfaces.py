@@ -23,6 +23,8 @@ class EditIface():
         if dummy_iface_name:
             self.iface_name = dummy_iface_name
             self.__create_iface(dummy_iface_name)
+        else:
+            print("[!] Dummy iface not used! This could result in lost packets due to system bottlenecks")
 
     def __create_iface(self, dummy_iface_name):
         """Create a dummy interface and assign the host MAC address to it."""

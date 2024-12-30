@@ -30,7 +30,7 @@ def load_args():
         '--dummy-iface',
         dest="dummy_iface",
         metavar="<NAME>",
-        help="Create a virtual interface with the given name to handle ARP spoofing (SEE GITHUB NOTES)",
+        help="Create a virtual interface with the given name to handle ARP spoofing (RECOMMENDED!)",
         type=str
         )
 

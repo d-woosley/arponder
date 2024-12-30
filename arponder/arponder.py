@@ -23,7 +23,7 @@ class Arponder():
         self.__scan_local_subnet()
 
         print(f"[-] Starting ARP listener on {self.main_iface.main_iface}")
-        sniff(iface=self.main_iface.main_iface, filter="arp", prn=self.__capture_callback, store=0)
+        sniff(iface=self.main_iface.main_iface, filter="", prn=self.__capture_callback, store=0)
 
     def start_queue(self):
         self.processor = PacketProcessor(self.main_iface, self.debug, self.analyze_only)
