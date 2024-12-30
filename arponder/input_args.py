@@ -7,6 +7,7 @@ def load_args():
         epilog="by: Duncan Woosley (github.com/d-woosley)",
     )
 
+    # Add arguments
     parser.add_argument(
         '-I',
         '--interface',
@@ -16,7 +17,6 @@ def load_args():
         required=True,
         type=str
         )
-
     parser.add_argument(
         '-A',
         "--analyze",
@@ -25,7 +25,6 @@ def load_args():
         action="store_true",
         default=False
         )
-
     parser.add_argument(
         '--dummy-iface',
         dest="dummy_iface",
@@ -33,7 +32,6 @@ def load_args():
         help="Create a virtual interface with the given name to handle ARP spoofing (RECOMMENDED!)",
         type=str
         )
-
     parser.add_argument(
         '-d',
         "--debug",
@@ -42,6 +40,23 @@ def load_args():
         action="store_true",
         default=False
         )
+    parser.add_argument(
+        '-l',
+        '--log',
+        dest="log",
+        help="Log the results to a file",
+        action="store_true",
+        default=False
+    )
+    parser.add_argument(
+        '-lf',
+        '--log-file',
+        dest="log_file",
+        metavar="<LOG_FILE>",
+        help="Path to save log to a file (Default=arponder.log)",
+        type=str,
+        default="arponder.log"
+    )
 
     # Get arg results
     args = parser.parse_args()

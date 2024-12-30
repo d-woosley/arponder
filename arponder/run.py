@@ -1,16 +1,21 @@
+import logging
+
 from arponder.input_args import load_args
 from arponder.arponder import Arponder
 from arponder.logo import ascii_logo
 from arponder.interfaces import EditIface
+from arponder.custom_logger import setup_logging
 
 def main():
     ascii_logo()
     args = load_args()
     iface = None
 
+    setup_logging(args.debug, args.log, args.log_file)
+
     try:
-        iface = EditIface(main_iface=args.net_interface, dummy_iface_name=args.dummy_iface, debug=args.debug)
-        arponder = Arponder(main_iface=iface, analyze_only=args.analyze, debug=args.debug)
+        iface = EditIface(main_iface=args.net_interface, dummy_iface_name=args.dummy_iface)
+        arponder = Arponder(main_iface=iface, analyze_only=args.analyze)
         arponder.start_listener()
     except KeyboardInterrupt:
         print("\n\nKeyboardInterrupt: Program terminated by user.")
