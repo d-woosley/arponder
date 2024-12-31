@@ -21,6 +21,7 @@ def main():
         print("\n\nKeyboardInterrupt: Program terminated by user.")
     finally:
         if iface:
+            iface.close_threads()
             iface.flush_ips()
             iface.remove_iface()
         if arponder:

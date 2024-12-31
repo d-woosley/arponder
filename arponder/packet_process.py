@@ -47,16 +47,6 @@ class PacketProcessor:
                     # Add IP to iface
                     self.main_iface.add_ip(ip_address=requested_ip)
 
-                    # Send poisoned ARP response
-                    poison_reply = Ether(dst=source_mac)/ARP(
-                        op=2,
-                        psrc=requested_ip,
-                        hwsrc=self.main_iface.main_interface_mac,
-                        pdst=requestor_ip,
-                        hwdst=source_mac
-                    )
-                    sendp(poison_reply, iface=self.main_iface.main_iface, verbose=0)
-
             else:
                 # ARP Reply (is-at)
                 from_mac = packet[ARP].hwsrc
