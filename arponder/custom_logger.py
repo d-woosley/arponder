@@ -34,6 +34,8 @@ class ScreenFormatter(logging.Formatter):
         # Determine the symbol based on log level and message content
         if "sent a packet" in record.msg or "attempted to connect" in record.msg or "pinged you via" in record.msg:
             symbol = "[+]"
+        elif record.levelno == logging.DEBUG:
+            symbol = "[i]"
         elif record.levelno == logging.WARNING:
             symbol = "[!]"
         elif record.levelno == logging.ERROR:
@@ -53,6 +55,8 @@ class FileFormatter(logging.Formatter):
         # Determine the symbol based on log level and message content
         if "sent a packet" in record.msg or "attempted to connect" in record.msg or "pinged you via" in record.msg:
             symbol = "[+]"
+        elif record.levelno == logging.DEBUG:
+            symbol = "[i]"
         elif record.levelno == logging.WARNING:
             symbol = "[!]"
         elif record.levelno == logging.ERROR:

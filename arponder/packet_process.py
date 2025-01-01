@@ -2,6 +2,7 @@ import logging
 import queue
 import threading
 from scapy.all import ARP, Ether, IP, TCP, UDP, ICMP, sendp
+import time
 
 # Get the logger for this module
 logger = logging.getLogger(__name__)
@@ -9,18 +10,25 @@ logger = logging.getLogger(__name__)
 class PacketProcessor:
     def __init__(self, iface, analyze_only: bool):
         self.main_iface = iface
-        self.stop_event = threading.Event()
+        self.analyze_only = analyze_only
+
+        # Threading vars
+        self.processer_stop_event = threading.Event()
+        self.checker_stop_event = threading.Event()
         self.packet_queue = queue.Queue()
         self.worker = threading.Thread(target=self.__process_packets, daemon=True)
         self.worker.start()
-        self.analyze_only = analyze_only
+        self.stale_check_thread = None
+        
         self.active_hosts = {}
+        self.arp_requests = {}
+        self.stale_timeout_period = None
 
     def enqueue_packet(self, packet):
         self.packet_queue.put(packet)
 
     def __process_packets(self):
-        while not self.stop_event.is_set():
+        while not self.processer_stop_event.is_set():
             try:
                 packet = self.packet_queue.get(timeout=0.5)
             except queue.Empty:
@@ -46,7 +54,8 @@ class PacketProcessor:
 
                     # Add IP to iface
                     self.main_iface.add_ip(ip_address=requested_ip)
-
+                elif self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.main_iface.added_ips:
+                    self.arp_requests[requested_ip] = time.time()
             else:
                 # ARP Reply (is-at)
                 from_mac = packet[ARP].hwsrc
@@ -64,8 +73,14 @@ class PacketProcessor:
                         self.main_iface.remove_ip(requested_ip)
 
                 elif requested_ip not in self.active_hosts:
-                    self.active_hosts[requested_ip] = from_mac
-                    logger.debug(f"Host {requested_ip} is now alive at {from_mac}")
+                    if self.analyze_only:
+                        logger.debug(f"ARP response from {requested_ip} found! Removing from self.arp_requests")
+                        pop_results = self.arp_requests.pop(requested_ip, "NOTFOUND")
+                        if pop_results == "NOTFOUND":
+                            logger.debug(f"ARP response from {requested_ip} ignored as request for {requested_ip} isn't in self.arp_requests")
+                    else:
+                        self.active_hosts[requested_ip] = from_mac
+                        logger.debug(f"Host {requested_ip} is now alive at {from_mac}")
 
     def __handle_non_arp(self, packet):
         # Ensure the packet is for our MAC address
@@ -126,5 +141,28 @@ class PacketProcessor:
             logger.info(f"{src_ip} sent IP protocol {proto_num} to {dst_ip}")
 
     def stop(self):
-        self.stop_event.set()
+        self.processer_stop_event.set()
         self.worker.join()
+
+    def __check_stale_entries(self):
+        while not self.checker_stop_event.is_set():
+            current_time = time.time()
+            stale_ips = [ip for ip, timestamp in self.arp_requests.items() if current_time - timestamp > self.stale_timeout_period]
+            for ip in stale_ips:
+                del self.arp_requests[ip]
+                self.main_iface.added_ips.add(ip)
+                logger.info(f"{ip} is stale!")
+            time.sleep(1)
+
+    def start_stale_checker(self, stale_timeout_period=5):
+        self.stale_timeout_period = stale_timeout_period
+        if self.stale_check_thread is None or not self.stale_check_thread.is_alive():
+            self.checker_stop_event.clear()
+            self.stale_check_thread = threading.Thread(target=self.__check_stale_entries, daemon=True)
+            self.stale_check_thread.start()
+
+    def stop_stale_checker(self):
+        if self.stale_check_thread is not None and self.stale_check_thread.is_alive():
+            self.checker_stop_event.set()
+            self.stale_check_thread.join()
+            self.stale_check_thread = None

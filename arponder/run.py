@@ -17,15 +17,15 @@ def main():
     try:
         iface = EditIface(main_iface=args.net_interface, dummy_iface_name=args.dummy_iface)
         arponder = Arponder(main_iface=iface, analyze_only=args.analyze)
-        arponder.scan_network(interval=args.scan_interval, aggressive=args.aggressive)
-        time.sleep(3)  # Allow time for scan to complete
+        if not args.analyze:
+            arponder.scan_network(interval=args.scan_interval, aggressive=args.aggressive)
+            time.sleep(3)  # Allow time for scan to complete
         arponder.start_listener()
-    except KeyboardInterrupt:
-        print("\n\nKeyboardInterrupt: Program terminated by user.")
     finally:
         if iface:
             iface.close_threads()
-            iface.flush_ips()
+            if not args.analyze:
+                iface.flush_ips()
             iface.remove_iface()
         if arponder:
             arponder.stop_queue()

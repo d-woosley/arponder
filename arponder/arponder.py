@@ -28,6 +28,8 @@ class Arponder:
         Will run until manually stopped (e.g., Ctrl+C).
         """
         logger.info(f"Starting ARP listener on {self.main_iface.main_iface}")
+        if self.analyze_only:
+            self.processor.start_stale_checker(stale_timeout_period=5)
         sniff(iface=self.main_iface.main_iface, filter="", prn=self.__capture_callback, store=0)
 
     def start_queue(self):
@@ -95,4 +97,5 @@ class Arponder:
             if hasattr(self, 'scan_stop_event_worker'):
                 # Wait for the thread to finish
                 self.scan_stop_event_worker.join()
+            self.processor.stop_stale_checker()
             logger.debug("Network scanning stopped.")
