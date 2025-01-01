@@ -36,7 +36,7 @@ class EditIface:
             self.idx = self.ipr.link_lookup(ifname=dummy_iface_name)[0]
             self.max_threads = 10  # Testing showed better results for lower thread num on dummy iface
         else:
-            logger.warning("Dummy iface not used! This could result in lost packets due to system bottlenecks")
+            logger.warning("Dummy interface not used! This could result in lost packets due to bottlenecks while interfaceing with the system")
 
         # Threading vars
         self.thread_executor = ThreadPoolExecutor(self.max_threads)
@@ -96,7 +96,7 @@ class EditIface:
             if addr.get('attrs', [])[0][1] == ip_address:
                 # Remove the IP if it exists
                 self.ipr.addr("del", index=self.idx, address=ip_address, prefixlen=prefixlen)
-                logger.info(f"Removed IP address '{ip_address}/{prefixlen}' from interface '{self.iface_name}'")
+                logger.debug(f"Removed IP address '{ip_address}/{prefixlen}' from interface '{self.iface_name}'")
                 return
         logger.warning(f"IP address '{ip_address}/{prefixlen}' not found on interface '{self.iface_name}'. Nothing to remove.")
 

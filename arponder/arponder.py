@@ -1,5 +1,7 @@
 import logging
 from scapy.all import sniff, ARP, srp, Ether
+import threading
+import time
 
 from arponder.packet_process import PacketProcessor
 
@@ -10,8 +12,10 @@ class Arponder:
     def __init__(self, main_iface, analyze_only=False):
         self.main_iface = main_iface
         self.analyze_only = analyze_only
+
         self.processor = None
         self.start_queue()
+        self.scan_stop_event = threading.Event()
 
         # Add given interface to active hosts
         self.processor.active_hosts[self.main_iface.main_ip] = self.main_iface.main_interface_mac
@@ -23,8 +27,6 @@ class Arponder:
 
         Will run until manually stopped (e.g., Ctrl+C).
         """
-        self.__scan_local_subnet()
-
         logger.info(f"Starting ARP listener on {self.main_iface.main_iface}")
         sniff(iface=self.main_iface.main_iface, filter="", prn=self.__capture_callback, store=0)
 
@@ -37,24 +39,60 @@ class Arponder:
     def __capture_callback(self, packet):
         self.processor.enqueue_packet(packet)
 
-    def __scan_local_subnet(self):
-        """Scans the local subnet for active hosts using ARP."""
-        logger.info(f"Scanning network: {self.main_iface.main_network} for active hosts...")
-        answered, unanswered = srp(
-            Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=str(self.main_iface.main_network)),
-            timeout=2,
-            iface=self.main_iface.main_iface,
-            verbose=0
-        )
+    def scan_network(self, interval=0, aggressive=False):
+        """
+        Scans the local subnet for active hosts using ARP. Runs periodically at the specified interval (in minutes) if provided.
 
-        # Parse discovered hosts
-        for snd, rcv in answered:
-            responding_ip = rcv.psrc
-            responding_mac = rcv.hwsrc
+        Parameters:
+            interval (int): Time in minutes between consecutive scans. 
+                            - Set to 'None' to run the scan only once.
+        """
+        def _scan():
+            while not self.scan_stop_event.is_set():
+                if aggressive:
+                    # Clear previous active host list
+                    logger.debug(f"Clearing {len(self.processor.active_hosts)} former active host from active hosts list")
+                    self.processor.active_hosts = {}
+                    self.processor.active_hosts[self.main_iface.main_ip] = self.main_iface.main_interface_mac
 
-            if responding_ip not in self.processor.active_hosts:
-                self.processor.active_hosts[responding_ip] = responding_mac
+                # ARP scan local network
+                logger.info(f"Scanning network {self.main_iface.main_network} for active hosts...")
+                answered, unanswered = srp(
+                    Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=str(self.main_iface.main_network)),
+                    timeout=2,
+                    iface=self.main_iface.main_iface,
+                    verbose=0
+                )
 
-            logger.debug(f"Host {responding_ip} is alive at {responding_mac}")
+                # Parse discovered hosts
+                for snd, rcv in answered:
+                    responding_ip = rcv.psrc
+                    responding_mac = rcv.hwsrc
 
-        logger.info(f"Found {len(self.processor.active_hosts)} hosts online in {self.main_iface.main_network}")
+                    if responding_ip not in self.processor.active_hosts:
+                        self.processor.active_hosts[responding_ip] = responding_mac
+                        logger.debug(f"Host {responding_ip} is alive at {responding_mac}")
+
+                logger.info(f"{len(self.processor.active_hosts)} hosts online in {self.main_iface.main_network}")
+                
+                if interval == None:
+                    break
+
+                logger.debug(f"Rescanning in {interval} minutes...")
+                for _ in range(interval * 60):
+                    if self.scan_stop_event.is_set():
+                        return
+                    time.sleep(1)
+
+        # Start the scanning process in a separate thread
+        self.scan_stop_event_worker = threading.Thread(target=_scan, daemon=True)
+        self.scan_stop_event_worker.start()
+
+    def stop_scan(self):
+        """Stops the network scan thread gracefully."""
+        if self.scan_stop_event:
+            self.scan_stop_event.set()
+            if hasattr(self, 'scan_stop_event_worker'):
+                # Wait for the thread to finish
+                self.scan_stop_event_worker.join()
+            logger.debug("Network scanning stopped.")

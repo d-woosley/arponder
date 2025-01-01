@@ -29,8 +29,22 @@ def load_args():
         '--dummy-iface',
         dest="dummy_iface",
         metavar="<NAME>",
-        help="Create a virtual interface with the given name to handle ARP spoofing (RECOMMENDED!)",
+        help="Create a virtual interface with the given name to handle ARP spoofing",
         type=str
+        )
+    parser.add_argument(
+        '--scan-interval',
+        dest="scan_interval",
+        metavar="<MINTUES>",
+        help="Time (in minutes) to rescan the local network with ARP",
+        type=int
+        )
+    parser.add_argument(
+        '--aggressive',
+        dest="aggressive",
+        help="Flush the former active host list each time the local network ARP scan is rerun",
+        action="store_true",
+        default=False
         )
     parser.add_argument(
         '-d',

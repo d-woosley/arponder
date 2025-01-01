@@ -1,4 +1,5 @@
 import logging
+import time
 
 from arponder.input_args import load_args
 from arponder.arponder import Arponder
@@ -16,6 +17,8 @@ def main():
     try:
         iface = EditIface(main_iface=args.net_interface, dummy_iface_name=args.dummy_iface)
         arponder = Arponder(main_iface=iface, analyze_only=args.analyze)
+        arponder.scan_network(interval=args.scan_interval, aggressive=args.aggressive)
+        time.sleep(3)  # Allow time for scan to complete
         arponder.start_listener()
     except KeyboardInterrupt:
         print("\n\nKeyboardInterrupt: Program terminated by user.")
@@ -26,6 +29,7 @@ def main():
             iface.remove_iface()
         if arponder:
             arponder.stop_queue()
+            arponder.stop_scan()
 
 if __name__ == "__main__":
     main()
