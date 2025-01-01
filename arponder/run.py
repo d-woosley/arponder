@@ -20,7 +20,7 @@ def main():
         if not args.analyze:
             arponder.scan_network(interval=args.scan_interval, aggressive=args.aggressive)
             time.sleep(3)  # Allow time for scan to complete
-        arponder.start_listener()
+        arponder.start_listener(stale_timeout_period=args.timeout_period)
     finally:
         if iface:
             iface.close_threads()

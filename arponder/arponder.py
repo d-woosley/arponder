@@ -12,6 +12,7 @@ class Arponder:
     def __init__(self, main_iface, analyze_only=False):
         self.main_iface = main_iface
         self.analyze_only = analyze_only
+        self.stale_timeout_period = None
 
         self.processor = None
         self.start_queue()
@@ -20,16 +21,17 @@ class Arponder:
         # Add given interface to active hosts
         self.processor.active_hosts[self.main_iface.main_ip] = self.main_iface.main_interface_mac
 
-    def start_listener(self):
+    def start_listener(self, stale_timeout_period=5):
         """
         ARP Scan the local network and starts sniffing ARP
         packets on the specified network interface.
 
         Will run until manually stopped (e.g., Ctrl+C).
         """
+        self.stale_timeout_period = stale_timeout_period
         logger.info(f"Starting ARP listener on {self.main_iface.main_iface}")
         if self.analyze_only:
-            self.processor.start_stale_checker(stale_timeout_period=5)
+            self.processor.start_stale_checker(stale_timeout_period=self.stale_timeout_period)
         sniff(iface=self.main_iface.main_iface, filter="", prn=self.__capture_callback, store=0)
 
     def start_queue(self):
