@@ -11,10 +11,10 @@ import ipaddress
 logger = logging.getLogger(__name__)
 
 class EditIface:
-    def __init__(self, main_iface: str, dummy_iface_name=None, max_threads=256):
+    def __init__(self, main_iface: str, dummy_iface=None, max_threads=256):
         self.iface_name = main_iface
         self.main_iface = main_iface
-        self.dummy_iface_name = dummy_iface_name
+        self.dummy_iface = dummy_iface
         self.max_threads = max_threads
 
         # Parse interface info
@@ -30,10 +30,10 @@ class EditIface:
         self.idx = self.ipr.link_lookup(ifname=self.iface_name)[0]
 
         # Act on Dummy Iface
-        if dummy_iface_name:
-            self.iface_name = dummy_iface_name
-            self.__create_iface(dummy_iface_name)
-            self.idx = self.ipr.link_lookup(ifname=dummy_iface_name)[0]
+        if dummy_iface:
+            self.iface_name = dummy_iface
+            self.__create_iface(dummy_iface)
+            self.idx = self.ipr.link_lookup(ifname=dummy_iface)[0]
             self.max_threads = 10  # Testing showed better results for lower thread num on dummy iface
         else:
             logger.warning("Dummy interface not used! This could result in lost packets due to bottlenecks while interfaceing with the system")
@@ -42,30 +42,30 @@ class EditIface:
         self.thread_executor = ThreadPoolExecutor(self.max_threads)
         self.shutdown_event = threading.Event()
 
-    def __create_iface(self, dummy_iface_name):
+    def __create_iface(self, dummy_iface):
         """Create a dummy interface and assign the host MAC address to it."""
-        logger.info(f"Creating dummy interface '{dummy_iface_name}' with MAC '{self.main_interface_mac}'")
+        logger.info(f"Creating dummy interface '{dummy_iface}' with MAC '{self.main_interface_mac}'")
 
-        self.ipr.link("add", ifname=dummy_iface_name, kind="dummy")
+        self.ipr.link("add", ifname=dummy_iface, kind="dummy")
         self.ipr.link("set", index=self.idx, address=self.main_interface_mac)
         self.ipr.link("set", index=self.idx, state="up")
 
-        logger.debug(f"Interface '{self.dummy_iface_name}' is up with MAC '{self.main_interface_mac}'")
+        logger.debug(f"Interface '{self.dummy_iface}' is up with MAC '{self.main_interface_mac}'")
 
     def remove_iface(self):
         """Remove the dummy interface if it exists."""
-        if self.dummy_iface_name:
-            logger.info(f"Removing dummy interface '{self.dummy_iface_name}'")
+        if self.dummy_iface:
+            logger.info(f"Removing dummy interface '{self.dummy_iface}'")
             self.ipr.link("del", index=self.idx)
 
-            logger.debug(f"Interface '{self.dummy_iface_name}' removed successfully")
+            logger.debug(f"Interface '{self.dummy_iface}' removed successfully")
         else:
             logger.debug("Interface not removed since no dummy interface was created")
 
     def add_ip(self, ip_address: str, prefixlen=32):
         """Add an IP address to the interface if it is not already assigned."""
         if self.shutdown_event.is_set():
-            self.logger.warning("Shutdown event is set. Skipping IP addition.")
+            logger.warning("Shutdown event is set. Skipping IP addition.")
             return
 
         # Create method for executor thread to avoid bottle neck with IP addtion
@@ -103,7 +103,7 @@ class EditIface:
     def flush_ips(self):
         """Remove all IPs that were added to the interface."""
         added_ip_count = len(self.added_ips)
-        logger.info(f"Removing {added_ip_count} IP addresses that were added to {self.iface_name}")
+        logger.info(f"Removing {added_ip_count} IP addresses that was added to {self.iface_name}")
         for ip in self.added_ips:
             self.remove_ip(ip)
 

@@ -9,9 +9,10 @@ from arponder.packet_process import PacketProcessor
 logger = logging.getLogger(__name__)
 
 class Arponder:
-    def __init__(self, main_iface, analyze_only=False):
+    def __init__(self, main_iface, analyze_only=False, stealthy=False):
         self.main_iface = main_iface
         self.analyze_only = analyze_only
+        self.stealthy = stealthy
         self.stale_timeout_period = None
 
         self.processor = None
@@ -29,6 +30,9 @@ class Arponder:
         Will run until manually stopped (e.g., Ctrl+C).
         """
         self.stale_timeout_period = stale_timeout_period
+        if self.stealthy:
+            logger.info("Network scan skipped (Stealthy mode)")
+
         logger.info(f"Starting ARP listener on {self.main_iface.main_iface}")
         if self.analyze_only:
             self.processor.start_stale_checker(stale_timeout_period=self.stale_timeout_period)
@@ -49,7 +53,7 @@ class Arponder:
 
         Parameters:
             interval (int): Time in minutes between consecutive scans. 
-                            - Set to 'None' to run the scan only once.
+                    - Set to 'None' to run the scan only once.
         """
         def _scan():
             while not self.scan_stop_event.is_set():

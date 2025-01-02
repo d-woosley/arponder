@@ -26,6 +26,14 @@ def load_args():
         default=False
         )
     parser.add_argument(
+        '-s',
+        "--stealthy",
+        dest="stealthy",
+        help="Run attack without performing any network scanning. Relies on hearing dead ARP request at least once before sending poisoned responses",
+        action="store_true",
+        default=False
+        )
+    parser.add_argument(
         '--dummy-iface',
         dest="dummy_iface",
         metavar="<NAME>",

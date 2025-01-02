@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class PacketProcessor:
     def __init__(self, iface, analyze_only: bool):
-        self.main_iface = iface
+        self.iface = iface
         self.analyze_only = analyze_only
 
         # Threading vars
@@ -42,19 +42,19 @@ class PacketProcessor:
     def __handle_arp(self, packet):
         """Private method to handle each ARP packet as it's captured."""
         if packet[ARP].op in (1, 2):
-            if packet[ARP].op == 1 and packet[ARP].hwsrc != self.main_iface.main_interface_mac:
+            if packet[ARP].op == 1 and packet[ARP].hwsrc != self.iface.main_interface_mac:
                 # ARP Request (who-has)
                 source_mac = packet[ARP].hwsrc
                 requested_ip = packet[ARP].pdst
                 logger.debug(f"ARP request from {source_mac} for {requested_ip}")
 
                 # Poison if not in analyze_only mode
-                if not self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.main_iface.added_ips:
+                if not self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
                     requestor_ip = packet[ARP].psrc
 
                     # Add IP to iface
-                    self.main_iface.add_ip(ip_address=requested_ip)
-                elif self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.main_iface.added_ips:
+                    self.iface.add_ip(ip_address=requested_ip)
+                elif self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
                     self.arp_requests[requested_ip] = time.time()
             else:
                 # ARP Reply (is-at)
@@ -62,15 +62,17 @@ class PacketProcessor:
                 to_mac = packet[ARP].hwdst
                 requested_ip = packet[ARP].psrc
 
-                if requested_ip in self.main_iface.added_ips:
-                    sender_ip = [ip for ip, mac in self.active_hosts.items() if mac == to_mac][0]
-
-                    if from_mac == self.main_iface.main_interface_mac:
+                if requested_ip in self.iface.added_ips:
+                    try:
+                        sender_ip = [ip for ip, mac in self.active_hosts.items() if mac == to_mac][0]  # ERROR WITH STELTH! Trying to resolve sender IP with no active hosts list. Also could cause issue with new host if error not handled (IndexError)
+                    except IndexError:
+                        sender_ip = f'Unknown IP (MAC: {to_mac})'
+                    if from_mac == self.iface.main_interface_mac:
                         logger.info(f"Sent poisoned ARP response to {sender_ip} for {requested_ip}")
                     else:
                         logger.warning(f"Unexpected ARP reply for {requested_ip}! Removing from poisoning list!")
                         self.active_hosts[requested_ip] = from_mac
-                        self.main_iface.remove_ip(requested_ip)
+                        self.iface.remove_ip(requested_ip)
 
                 elif requested_ip not in self.active_hosts:
                     if self.analyze_only:
@@ -84,7 +86,7 @@ class PacketProcessor:
 
     def __handle_non_arp(self, packet):
         # Ensure the packet is for our MAC address
-        if Ether in packet and packet[Ether].dst.lower() != self.main_iface.main_interface_mac.lower():
+        if Ether in packet and packet[Ether].dst.lower() != self.iface.main_interface_mac.lower():
             return
 
         if IP not in packet:
@@ -94,7 +96,7 @@ class PacketProcessor:
         dst_ip = packet[IP].dst
 
         # Only process if dst_ip is one of our "poisoned" IP addresses
-        if dst_ip not in self.main_iface.added_ips:
+        if dst_ip not in self.iface.added_ips:
             return
 
         # -- TCP logic --
@@ -150,7 +152,7 @@ class PacketProcessor:
             stale_ips = [ip for ip, timestamp in self.arp_requests.items() if current_time - timestamp > self.stale_timeout_period]
             for ip in stale_ips:
                 del self.arp_requests[ip]
-                self.main_iface.added_ips.add(ip)
+                self.iface.add(ip)
                 logger.info(f"{ip} is stale!")
             time.sleep(1)
 
