@@ -9,9 +9,9 @@ from arponder.packet_process import PacketProcessor
 logger = logging.getLogger(__name__)
 
 class Arponder:
-    def __init__(self, iface, analyze_only=False, stealthy=False):
+    def __init__(self, iface, analyze=False, stealthy=False):
         self.iface = iface
-        self.analyze_only = analyze_only
+        self.analyze = analyze
         self.stealthy = stealthy
         self.stale_timeout_period = None
 
@@ -32,14 +32,15 @@ class Arponder:
         self.stale_timeout_period = stale_timeout_period
         if self.stealthy:
             logger.info("Network scan skipped (Stealthy mode)")
+        if self.analyze
 
         logger.info(f"Starting ARP listener on {self.iface.iface}")
-        if self.analyze_only or self.stealthy:
+        if self.analyze or self.stealthy:
             self.processor.start_stale_checker(stale_timeout_period=self.stale_timeout_period)
         sniff(iface=self.iface.iface, filter="", prn=self.__capture_callback, store=0)
 
     def start_queue(self):
-        self.processor = PacketProcessor(self.iface, self.analyze_only)
+        self.processor = PacketProcessor(self.iface, self.analyze)
 
     def stop_queue(self):
         self.processor.stop()
@@ -98,7 +99,7 @@ class Arponder:
 
     def stop_scan(self):
         """Stops the network scan thread gracefully."""
-        if not self.stealthy and not self.analyze_only:
+        if not self.stealthy and not self.analyze:
             if self.scan_stop_event:
                 self.scan_stop_event.set()
                 if hasattr(self, 'scan_stop_event_worker'):

@@ -8,9 +8,9 @@ import time
 logger = logging.getLogger(__name__)
 
 class PacketProcessor:
-    def __init__(self, iface, analyze_only: bool):
+    def __init__(self, iface, analyze: bool):
         self.iface = iface
-        self.analyze_only = analyze_only
+        self.analyze = analyze
 
         # Threading vars
         self.processer_stop_event = threading.Event()
@@ -54,11 +54,11 @@ class PacketProcessor:
                     logger.debug(f"Host {requestor_ip} is alive at {source_mac}")
 
 
-                # Poison if not in analyze_only mode
-                if not self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
+                # Poison if not in analyze mode
+                if not self.analyze and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
                     # Add IP to iface
                     self.iface.add_ip(ip_address=requested_ip)
-                elif self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
+                elif self.analyze and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
                     self.arp_requests[requested_ip] = time.time()
             else:
                 # ARP Reply (is-at)
@@ -80,7 +80,7 @@ class PacketProcessor:
                         self.iface.remove_ip(requested_ip)
 
                 elif requested_ip not in self.active_hosts:
-                    if self.analyze_only:
+                    if self.analyze:
                         logger.debug(f"ARP response from {requested_ip} found! Removing from self.arp_requests")
                         pop_results = self.arp_requests.pop(requested_ip, "NOTFOUND")
                         if pop_results == "NOTFOUND":

@@ -16,7 +16,7 @@ def main():
 
     try:
         iface = EditIface(iface=args.net_interface, dummy_iface=args.dummy_iface)
-        arponder = Arponder(iface=iface, analyze_only=args.analyze, stealthy=args.stealthy)
+        arponder = Arponder(iface=iface, analyze=args.analyze, stealthy=args.stealthy)
         if not args.analyze and not args.stealthy:
             arponder.scan_network(interval=args.scan_interval, aggressive=args.aggressive)
             time.sleep(3)  # Allow time for scan to complete
