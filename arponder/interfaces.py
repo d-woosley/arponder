@@ -1,11 +1,12 @@
 import logging
 from pyroute2 import IPRoute
-from pyroute2.netlink.exceptions import NetlinkError
+from pyroute2.netlink.exceptions import NetlinkError, NetlinkDumpInterrupted
 from scapy.all import get_if_hwaddr, get_if_addr
 import threading
 from concurrent.futures import ThreadPoolExecutor
 import netifaces
 import ipaddress
+import time
 
 # Get the logger for this module
 logger = logging.getLogger(__name__)
@@ -91,7 +92,17 @@ class EditIface:
     def remove_ip(self, ip_address: str, prefixlen=32):
         """Remove an IP address from the interface if it exists."""
         # Get all IPs assigned to the interface
-        existing_ips = self.ipr.get_addr(index=self.idx)
+        try:
+            existing_ips = self.ipr.get_addr(index=self.idx)
+        except NetlinkDumpInterrupted as e:
+            try:
+                # Resource Busy. Sleep and retry
+                time.sleep(2)
+                existing_ips = self.ipr.get_addr(index=self.idx)
+            except NetlinkDumpInterrupted as e:
+                # Failed Twice, raise error
+                logger.error(f"Unexpected NetlinkError: {e} (Code: {e.code})")
+                raise
         for addr in existing_ips:
             if addr.get('attrs', [])[0][1] == ip_address:
                 # Remove the IP if it exists

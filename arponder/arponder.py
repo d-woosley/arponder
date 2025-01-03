@@ -98,10 +98,13 @@ class Arponder:
 
     def stop_scan(self):
         """Stops the network scan thread gracefully."""
-        if self.scan_stop_event:
-            self.scan_stop_event.set()
-            if hasattr(self, 'scan_stop_event_worker'):
-                # Wait for the thread to finish
-                self.scan_stop_event_worker.join()
-            self.processor.stop_stale_checker()
-            logger.debug("Network scanning stopped.")
+        if not self.stealthy and not self.analyze_only:
+            if self.scan_stop_event:
+                self.scan_stop_event.set()
+                if hasattr(self, 'scan_stop_event_worker'):
+                    # Wait for the thread to finish
+                    self.scan_stop_event_worker.join()
+                self.processor.stop_stale_checker()
+                logger.debug("Network scanning stopped.")
+        else:
+            logger.debug("Network scanning not stopped since it was never started.")
