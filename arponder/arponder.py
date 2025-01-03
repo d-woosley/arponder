@@ -30,9 +30,6 @@ class Arponder:
         Will run until manually stopped (e.g., Ctrl+C).
         """
         self.stale_timeout_period = stale_timeout_period
-        if self.stealthy:
-            logger.info("Network scan skipped (Stealthy mode)")
-        if self.analyze
 
         logger.info(f"Starting ARP listener on {self.iface.iface}")
         if self.analyze or self.stealthy:

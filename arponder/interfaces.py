@@ -12,10 +12,11 @@ import time
 logger = logging.getLogger(__name__)
 
 class EditIface:
-    def __init__(self, iface: str, dummy_iface=None, max_threads=256):
+    def __init__(self, iface: str, dummy_iface=None, analyze=False, max_threads=256):
         self.name = iface
         self.iface = iface
         self.dummy_iface = dummy_iface
+        self.analyze = analyze
         self.max_threads = max_threads
 
         # Parse interface info
@@ -65,6 +66,9 @@ class EditIface:
 
     def add_ip(self, ip_address: str, prefixlen=32):
         """Add an IP address to the interface if it is not already assigned."""
+        if self.analyze:
+            logger.debug(f"IP {ip_address} not added to interface {self.iface} (Analyze Mode)")
+            return
         if self.shutdown_event.is_set():
             logger.warning("Shutdown event is set. Skipping IP addition.")
             return

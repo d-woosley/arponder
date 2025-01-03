@@ -157,7 +157,7 @@ class PacketProcessor:
             stale_ips = [ip for ip, timestamp in self.arp_requests.items() if current_time - timestamp > self.stale_timeout_period]
             for ip in stale_ips:
                 del self.arp_requests[ip]
-                self.iface.add(ip)
+                self.iface.add_ip(ip)
                 logger.info(f"{ip} is stale!")
             time.sleep(1)
 
