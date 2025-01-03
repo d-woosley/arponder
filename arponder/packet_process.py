@@ -51,7 +51,7 @@ class PacketProcessor:
 
                 if requestor_ip not in self.active_hosts:
                     self.active_hosts[requestor_ip] = source_mac
-                    logger.debug(f"Host {requestor_ip} is alive with the MAC address of {source_mac}")
+                    logger.debug(f"Host {requestor_ip} is alive at {source_mac}")
 
 
                 # Poison if not in analyze_only mode
@@ -76,7 +76,7 @@ class PacketProcessor:
                     else:
                         logger.warning(f"Unexpected ARP reply for {requested_ip}! Removing from poisoning list!")
                         self.active_hosts[requested_ip] = from_mac
-                        logger.debug(f"Host {requested_ip} is alive with the MAC address of {from_mac}")
+                        logger.debug(f"Host {requested_ip} is alive at {from_mac}")
                         self.iface.remove_ip(requested_ip)
 
                 elif requested_ip not in self.active_hosts:
@@ -87,7 +87,7 @@ class PacketProcessor:
                             logger.debug(f"ARP response from {requested_ip} ignored as request for {requested_ip} isn't in self.arp_requests")
                     else:
                         self.active_hosts[requested_ip] = from_mac
-                        logger.debug(f"Host {requested_ip} is alive with the MAC address of {from_mac}")
+                        logger.debug(f"Host {requested_ip} is alive at {from_mac}")
 
     def __handle_non_arp(self, packet):
         # Ensure the packet is for our MAC address
