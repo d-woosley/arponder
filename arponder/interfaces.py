@@ -13,26 +13,26 @@ logger = logging.getLogger(__name__)
 
 class EditIface:
     def __init__(self, iface: str, dummy_iface=None, max_threads=256):
-        self.iface_name = iface
+        self.name = iface
         self.iface = iface
         self.dummy_iface = dummy_iface
         self.max_threads = max_threads
 
         # Parse interface info
-        self.main_interface_mac = get_if_hwaddr(self.iface)
-        self.main_ip = get_if_addr(self.iface)
-        self.main_interface_addrs = netifaces.ifaddresses(self.iface)
-        self.main_netmask = self.main_interface_addrs[netifaces.AF_INET][0]['netmask']
-        self.main_network = ipaddress.ip_network(f"{self.main_ip}/{self.main_netmask}", strict=False)
+        self.mac = get_if_hwaddr(self.iface)
+        self.ip = get_if_addr(self.iface)
+        self.addrs = netifaces.ifaddresses(self.iface)
+        self.netmask = self.addrs[netifaces.AF_INET][0]['netmask']
+        self.network = ipaddress.ip_network(f"{self.ip}/{self.netmask}", strict=False)
 
         # Define general use vars
         self.ipr = IPRoute()
         self.added_ips = set()
-        self.idx = self.ipr.link_lookup(ifname=self.iface_name)[0]
+        self.idx = self.ipr.link_lookup(ifname=self.name)[0]
 
         # Act on Dummy Iface
         if dummy_iface:
-            self.iface_name = dummy_iface
+            self.name = dummy_iface
             self.__create_iface(dummy_iface)
             self.idx = self.ipr.link_lookup(ifname=dummy_iface)[0]
             self.max_threads = 10  # Testing showed better results for lower thread num on dummy iface
@@ -45,13 +45,13 @@ class EditIface:
 
     def __create_iface(self, dummy_iface):
         """Create a dummy interface and assign the host MAC address to it."""
-        logger.info(f"Creating dummy interface '{dummy_iface}' with MAC '{self.main_interface_mac}'")
+        logger.info(f"Creating dummy interface '{dummy_iface}' with MAC '{self.mac}'")
 
         self.ipr.link("add", ifname=dummy_iface, kind="dummy")
-        self.ipr.link("set", index=self.idx, address=self.main_interface_mac)
+        self.ipr.link("set", index=self.idx, address=self.mac)
         self.ipr.link("set", index=self.idx, state="up")
 
-        logger.debug(f"Interface '{self.dummy_iface}' is up with MAC '{self.main_interface_mac}'")
+        logger.debug(f"Interface '{self.dummy_iface}' is up with MAC '{self.mac}'")
 
     def remove_iface(self):
         """Remove the dummy interface if it exists."""
@@ -75,7 +75,7 @@ class EditIface:
                 self.ipr.addr("add", index=self.idx, address=ip_address, prefixlen=prefixlen)
             except NetlinkError as e:
                 if e.code == 17:  # Error code for 'File exists' (aka IP already added)
-                    logger.warning(f"IP address '{ip_address}' is already assigned to interface '{self.iface_name}'. Skipping.")
+                    logger.warning(f"IP address '{ip_address}' is already assigned to interface '{self.name}'. Skipping.")
                     return
                 else:
                     logger.error(f"Unexpected NetlinkError: {e.strerror} (Code: {e.code})")
@@ -84,7 +84,7 @@ class EditIface:
                 logger.error(f"Unexpected error in thread: {e}")
                 raise
 
-            logger.info(f"Added IP address '{ip_address}/{prefixlen}' to interface '{self.iface_name}'")
+            logger.info(f"Added IP address '{ip_address}/{prefixlen}' to interface '{self.name}'")
 
         self.thread_executor.submit(netlink_worker)
         self.added_ips.add(ip_address)
@@ -107,16 +107,17 @@ class EditIface:
             if addr.get('attrs', [])[0][1] == ip_address:
                 # Remove the IP if it exists
                 self.ipr.addr("del", index=self.idx, address=ip_address, prefixlen=prefixlen)
-                logger.debug(f"Removed IP address '{ip_address}/{prefixlen}' from interface '{self.iface_name}'")
+                logger.debug(f"Removed IP address '{ip_address}/{prefixlen}' from interface '{self.name}'")
                 self.added_ips.remove(ip_address)
                 return
-        logger.warning(f"IP address '{ip_address}/{prefixlen}' not found on interface '{self.iface_name}'. Nothing to remove.")
+        logger.warning(f"IP address '{ip_address}/{prefixlen}' not found on interface '{self.name}'. Nothing to remove.")
 
     def flush_ips(self):
         """Remove all IPs that were added to the interface."""
         added_ip_count = len(self.added_ips)
-        logger.info(f"Removing {added_ip_count} IP addresses that was added to {self.iface_name}")
-        for ip in self.added_ips:
+        logger.info(f"Removing {added_ip_count} IP addresses that was added to {self.name}")
+        remove_list = list(self.added_ips)
+        for ip in remove_list:
             self.remove_ip(ip)
 
     def close_threads(self):

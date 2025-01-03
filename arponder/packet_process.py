@@ -42,7 +42,7 @@ class PacketProcessor:
     def __handle_arp(self, packet):
         """Private method to handle each ARP packet as it's captured."""
         if packet[ARP].op in (1, 2):
-            if packet[ARP].op == 1 and packet[ARP].hwsrc != self.iface.main_interface_mac:
+            if packet[ARP].op == 1 and packet[ARP].hwsrc != self.iface.mac:
                 # ARP Request (who-has)
                 source_mac = packet[ARP].hwsrc
                 requested_ip = packet[ARP].pdst
@@ -67,7 +67,7 @@ class PacketProcessor:
                         sender_ip = [ip for ip, mac in self.active_hosts.items() if mac == to_mac][0]  # ERROR WITH STELTH! Trying to resolve sender IP with no active hosts list. Also could cause issue with new host if error not handled (IndexError)
                     except IndexError:
                         sender_ip = f'Unknown IP (MAC: {to_mac})'
-                    if from_mac == self.iface.main_interface_mac:
+                    if from_mac == self.iface.mac:
                         logger.info(f"Sent poisoned ARP response to {sender_ip} for {requested_ip}")
                     else:
                         logger.warning(f"Unexpected ARP reply for {requested_ip}! Removing from poisoning list!")
@@ -86,7 +86,7 @@ class PacketProcessor:
 
     def __handle_non_arp(self, packet):
         # Ensure the packet is for our MAC address
-        if Ether in packet and packet[Ether].dst.lower() != self.iface.main_interface_mac.lower():
+        if Ether in packet and packet[Ether].dst.lower() != self.iface.mac.lower():
             return
 
         if IP not in packet:
