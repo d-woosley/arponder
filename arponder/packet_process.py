@@ -46,12 +46,16 @@ class PacketProcessor:
                 # ARP Request (who-has)
                 source_mac = packet[ARP].hwsrc
                 requested_ip = packet[ARP].pdst
+                requestor_ip = packet[ARP].psrc
                 logger.debug(f"ARP request from {source_mac} for {requested_ip}")
+
+                if requestor_ip not in self.active_hosts:
+                    self.active_hosts[requestor_ip] = source_mac
+                    logger.debug(f"Host {requestor_ip} is alive with the MAC address of {source_mac}")
+
 
                 # Poison if not in analyze_only mode
                 if not self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
-                    requestor_ip = packet[ARP].psrc
-
                     # Add IP to iface
                     self.iface.add_ip(ip_address=requested_ip)
                 elif self.analyze_only and requested_ip not in self.active_hosts and requested_ip not in self.iface.added_ips:
@@ -72,6 +76,7 @@ class PacketProcessor:
                     else:
                         logger.warning(f"Unexpected ARP reply for {requested_ip}! Removing from poisoning list!")
                         self.active_hosts[requested_ip] = from_mac
+                        logger.debug(f"Host {requested_ip} is alive with the MAC address of {from_mac}")
                         self.iface.remove_ip(requested_ip)
 
                 elif requested_ip not in self.active_hosts:
@@ -82,7 +87,7 @@ class PacketProcessor:
                             logger.debug(f"ARP response from {requested_ip} ignored as request for {requested_ip} isn't in self.arp_requests")
                     else:
                         self.active_hosts[requested_ip] = from_mac
-                        logger.debug(f"Host {requested_ip} is now alive at {from_mac}")
+                        logger.debug(f"Host {requested_ip} is alive with the MAC address of {from_mac}")
 
     def __handle_non_arp(self, packet):
         # Ensure the packet is for our MAC address
