@@ -1,5 +1,12 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 
+import re
+
+def validate_alphanumeric(value):
+    """Ensure the input value contains only alphanumeric characters (1-9, a-z, A-Z)."""
+    if not re.fullmatch(r'[a-zA-Z0-9]+', value):
+        raise ArgumentTypeError(f"'{value}' must only contain numbers 1-9 or letters a-z or A-Z.")
+    return value
 
 def load_args():
     parser = ArgumentParser(
@@ -15,7 +22,7 @@ def load_args():
         metavar="<INTERFACE>",
         help='Network interface to use for listening',
         required=True,
-        type=str
+        type=validate_alphanumeric
         )
     parser.add_argument(
         '-A',
@@ -38,7 +45,7 @@ def load_args():
         dest="dummy_iface",
         metavar="<NAME>",
         help="Create a virtual interface with the given name to handle ARP spoofing",
-        type=str
+        type=validate_alphanumeric
         )
     parser.add_argument(
         '--scan-interval',
