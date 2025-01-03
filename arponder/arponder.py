@@ -9,8 +9,8 @@ from arponder.packet_process import PacketProcessor
 logger = logging.getLogger(__name__)
 
 class Arponder:
-    def __init__(self, main_iface, analyze_only=False, stealthy=False):
-        self.main_iface = main_iface
+    def __init__(self, iface, analyze_only=False, stealthy=False):
+        self.iface = iface
         self.analyze_only = analyze_only
         self.stealthy = stealthy
         self.stale_timeout_period = None
@@ -20,7 +20,7 @@ class Arponder:
         self.scan_stop_event = threading.Event()
 
         # Add given interface to active hosts
-        self.processor.active_hosts[self.main_iface.main_ip] = self.main_iface.main_interface_mac
+        self.processor.active_hosts[self.iface.main_ip] = self.iface.main_interface_mac
 
     def start_listener(self, stale_timeout_period=5):
         """
@@ -33,13 +33,13 @@ class Arponder:
         if self.stealthy:
             logger.info("Network scan skipped (Stealthy mode)")
 
-        logger.info(f"Starting ARP listener on {self.main_iface.main_iface}")
+        logger.info(f"Starting ARP listener on {self.iface.iface}")
         if self.analyze_only:
             self.processor.start_stale_checker(stale_timeout_period=self.stale_timeout_period)
-        sniff(iface=self.main_iface.main_iface, filter="", prn=self.__capture_callback, store=0)
+        sniff(iface=self.iface.iface, filter="", prn=self.__capture_callback, store=0)
 
     def start_queue(self):
-        self.processor = PacketProcessor(self.main_iface, self.analyze_only)
+        self.processor = PacketProcessor(self.iface, self.analyze_only)
 
     def stop_queue(self):
         self.processor.stop()
@@ -61,14 +61,14 @@ class Arponder:
                     # Clear previous active host list
                     logger.debug(f"Clearing {len(self.processor.active_hosts)} former active host from active hosts list")
                     self.processor.active_hosts = {}
-                    self.processor.active_hosts[self.main_iface.main_ip] = self.main_iface.main_interface_mac
+                    self.processor.active_hosts[self.iface.main_ip] = self.iface.main_interface_mac
 
                 # ARP scan local network
-                logger.info(f"Scanning network {self.main_iface.main_network} for active hosts...")
+                logger.info(f"Scanning network {self.iface.main_network} for active hosts...")
                 answered, unanswered = srp(
-                    Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=str(self.main_iface.main_network)),
+                    Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=str(self.iface.main_network)),
                     timeout=2,
-                    iface=self.main_iface.main_iface,
+                    iface=self.iface.iface,
                     verbose=0
                 )
 
@@ -81,7 +81,7 @@ class Arponder:
                         self.processor.active_hosts[responding_ip] = responding_mac
                         logger.debug(f"Host {responding_ip} is alive at {responding_mac}")
 
-                logger.info(f"{len(self.processor.active_hosts)} hosts online in {self.main_iface.main_network}")
+                logger.info(f"{len(self.processor.active_hosts)} hosts online in {self.iface.main_network}")
                 
                 if interval == None:
                     break

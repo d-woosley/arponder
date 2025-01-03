@@ -15,8 +15,8 @@ def main():
     setup_logging(args.debug, args.log, args.log_file)
 
     try:
-        iface = EditIface(main_iface=args.net_interface, dummy_iface=args.dummy_iface)
-        arponder = Arponder(main_iface=iface, analyze_only=args.analyze, stealthy=args.stealthy)
+        iface = EditIface(iface=args.net_interface, dummy_iface=args.dummy_iface)
+        arponder = Arponder(iface=iface, analyze_only=args.analyze, stealthy=args.stealthy)
         if not args.analyze and not args.stealthy:
             arponder.scan_network(interval=args.scan_interval, aggressive=args.aggressive)
             time.sleep(3)  # Allow time for scan to complete

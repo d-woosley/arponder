@@ -12,16 +12,16 @@ import time
 logger = logging.getLogger(__name__)
 
 class EditIface:
-    def __init__(self, main_iface: str, dummy_iface=None, max_threads=256):
-        self.iface_name = main_iface
-        self.main_iface = main_iface
+    def __init__(self, iface: str, dummy_iface=None, max_threads=256):
+        self.iface_name = iface
+        self.iface = iface
         self.dummy_iface = dummy_iface
         self.max_threads = max_threads
 
         # Parse interface info
-        self.main_interface_mac = get_if_hwaddr(self.main_iface)
-        self.main_ip = get_if_addr(self.main_iface)
-        self.main_interface_addrs = netifaces.ifaddresses(self.main_iface)
+        self.main_interface_mac = get_if_hwaddr(self.iface)
+        self.main_ip = get_if_addr(self.iface)
+        self.main_interface_addrs = netifaces.ifaddresses(self.iface)
         self.main_netmask = self.main_interface_addrs[netifaces.AF_INET][0]['netmask']
         self.main_network = ipaddress.ip_network(f"{self.main_ip}/{self.main_netmask}", strict=False)
 
@@ -108,6 +108,7 @@ class EditIface:
                 # Remove the IP if it exists
                 self.ipr.addr("del", index=self.idx, address=ip_address, prefixlen=prefixlen)
                 logger.debug(f"Removed IP address '{ip_address}/{prefixlen}' from interface '{self.iface_name}'")
+                self.added_ips.remove(ip_address)
                 return
         logger.warning(f"IP address '{ip_address}/{prefixlen}' not found on interface '{self.iface_name}'. Nothing to remove.")
 
