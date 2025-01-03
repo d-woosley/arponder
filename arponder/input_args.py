@@ -44,8 +44,9 @@ def load_args():
         '--scan-interval',
         dest="scan_interval",
         metavar="<MINTUES>",
-        help="Time (in minutes) to rescan the local network with ARP",
-        type=int
+        help="Time (in minutes) to rescan the local network with ARP (default=15)",
+        type=int,
+        default=15
         )
     parser.add_argument(
         '--aggressive',
