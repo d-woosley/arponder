@@ -58,7 +58,7 @@ def load_args():
     parser.add_argument(
         '--timeout-period',
         dest="timeout_period",
-        metavar="<MINTUES>",
+        metavar="<SECONDS>",
         help="Time (in seconds) to wait to hear ARP response until assuming host is offline (Default=5). Increase in slow networks",
         type=int,
         default=5
